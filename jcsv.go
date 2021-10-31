@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 func JsonToCsv(j []byte, addHeaders bool) ([]byte, error) {
 	// TODO: convert JSON data in `j` into CSV format and return
@@ -13,8 +16,13 @@ func CsvToJson(c []byte, hasHeaders bool) ([]byte, error) {
 }
 
 func main() {
-	f,err:=ParseJsonFile("data.json")
-	if err==nil{
-		fmt.Println(string(f.data))
+	fil,err := os.Open("C:\\Users\\sulem\\OneDrive\\Desktop\\data.json")
+	if err!=nil{
+		fmt.Println(err)
 	}
+	data,readError := ParseOpenedJsonFile(fil)
+	if readError!=nil{
+		fmt.Println(readError)
+	}
+	fmt.Println(string(data.data))
 }

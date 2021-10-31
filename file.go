@@ -27,8 +27,13 @@ func ParseJsonFile(path string) (file, error) {
 }
 
 func ParseOpenedJsonFile(f *os.File) (file, error) {
-	// TODO: read the given file into your `file` object
-	return file{}, nil
+	var fileRead file
+	var fileReadError error
+	fileRead.data,fileReadError=ioutil.ReadAll(f)
+	if fileReadError!=nil {
+		return file{},fileReadError
+	}
+	return fileRead,nil
 }
 
 func ParseCsvFile(path string, hasHeaders bool) (file, error) {
