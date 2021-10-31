@@ -2,7 +2,8 @@ package jcsv
 
 import (
 	"encoding/json"
-	"fmt"
+	"strconv"
+	"strings"
 )
 
 type JSOBObject struct {
@@ -13,7 +14,6 @@ func JsonToCsv(j []byte, addHeaders bool) ([]byte, error) {
 	// TODO: convert JSON data in `j` into CSV format and return
 	var JSON JSOBObject
 	json.Unmarshal(j, &JSON.Data)
-	fmt.Println(JSON.Data)
 	var CSVData string
 	var header string
 	isHeaderFormed := false
@@ -37,6 +37,38 @@ func JsonToCsv(j []byte, addHeaders bool) ([]byte, error) {
 
 func CsvToJson(c []byte, hasHeaders bool) ([]byte, error) {
 	// TODO: convert CSV data in `c` into JSON format and return
-	//if(has)
-	return nil, nil
+	CSVStr := string(c)
+	var JSON JSOBObject
+	splittedStr := strings.Split(CSVStr, "\n")
+	var header []string
+	if hasHeaders {
+		header = strings.Split(splittedStr[0], ",")
+	}
+	JSON.Data = make(map[string]map[string]string)
+	outerInd := 1
+	skipped := false
+	for _, row := range splittedStr {
+		if row != "" {
+			key := "row" + strconv.Itoa(outerInd)
+			if hasHeaders == false || skipped == true {
+				JSON.Data[key] = make(map[string]string)
+			}
+			splittedRow := strings.Split(row, ",")
+			innerInd := 1
+			for _, attribute := range splittedRow {
+				if hasHeaders == true {
+					if skipped == true {
+						JSON.Data[key][header[innerInd-1]] = attribute
+					}
+				} else {
+					JSON.Data[key]["column"+strconv.Itoa(innerInd)] = attribute
+				}
+				innerInd = innerInd + 1
+			}
+			skipped = true
+		}
+		outerInd = outerInd + 1
+	}
+	jsonData, _ := json.Marshal(JSON.Data)
+	return []byte(jsonData), nil
 }
