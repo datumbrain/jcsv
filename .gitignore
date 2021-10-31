@@ -27,6 +27,3 @@ vendor/
 
 # Log files
 *.log
-
-# File used for testing go functions
-Driver.go

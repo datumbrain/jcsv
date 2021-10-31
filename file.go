@@ -23,13 +23,15 @@ func ParseJsonFile(path string) (file, error) {
 	defer jsonFile.Close()
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal([]byte(byteValue), &myFile.JSONFormat)
-	fmt.Println(myFile.JSONFormat)
 	return myFile, nil
 }
 
 func ParseOpenedJsonFile(f *os.File) (file, error) {
 	// TODO: read the given file into your `file` object
-	return file{}, nil
+	var myFile file
+	byteValue, _ := ioutil.ReadAll(f)
+	json.Unmarshal([]byte(byteValue), &myFile.JSONFormat)
+	return myFile, nil
 }
 
 func ParseCsvFile(path string, hasHeaders bool) (file, error) {
