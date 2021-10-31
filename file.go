@@ -10,6 +10,7 @@ import (
 type file struct {
 	data []uint8
 	csvData [][]string
+	csvHeader []string
 }
 
 func ParseJsonFile(path string) (file, error) {
@@ -41,6 +42,7 @@ func ParseCsvFile(path string, hasHeaders bool) (file, error) {
 	var f file
 	f.data=nil
 	f.csvData=nil
+	f.csvHeader=nil
 	csvFile, err := os.Open(path)
 	if err != nil {
 		fmt.Println(err)
@@ -49,6 +51,11 @@ func ParseCsvFile(path string, hasHeaders bool) (file, error) {
 	readBuffer,readError := csv.NewReader(csvFile).ReadAll()
 	if readError!=nil{
 		return file{},readError
+	}
+	if hasHeaders{
+		for j:=0;j<len(readBuffer[0]);j++{
+			f.csvHeader=append(f.csvHeader,readBuffer[0][j])
+		}
 	}
 	var i int
 	if hasHeaders{
@@ -64,11 +71,17 @@ func ParseCsvFile(path string, hasHeaders bool) (file, error) {
 
 func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 	var fileObj file
+	fileObj.csvHeader=nil
 	fileObj.data=nil
 	fileObj.csvData=nil
 	readBuffer,readError := csv.NewReader(f).ReadAll()
 	if readError!=nil{
 		return file{},readError
+	}
+	if hasHeaders{
+		for j:=0;j<len(readBuffer[0]);j++{
+			fileObj.csvHeader=append(fileObj.csvHeader,readBuffer[0][j])
+		}
 	}
 	var i int
 	if hasHeaders{
