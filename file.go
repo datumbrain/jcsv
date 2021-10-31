@@ -17,53 +17,68 @@ type file struct {
 	}
 }
 
+func (f *file) initialize() {
+	f.JSONFormat = nil
+	f.CSVFormat.Data = nil
+	f.CSVFormat.HasHeaders = false
+}
 func ParseJsonFile(path string) (file, error) {
 	// TODO: open and read the given file into your `file` object
 	jsonFile, err := os.Open(path)
 	var myFile file
-	myFile.CSVFormat.Data = nil
-	myFile.CSVFormat.HasHeaders = false
+	myFile.initialize()
 	if err != nil {
-		myFile.JSONFormat = nil
 		return myFile, err
 	}
 	defer jsonFile.Close()
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	json.Unmarshal([]byte(byteValue), &myFile.JSONFormat)
-	return myFile, nil
+	byteValue, err := ioutil.ReadAll(jsonFile)
+	if err == nil {
+		json.Unmarshal([]byte(byteValue), &myFile.JSONFormat)
+	}
+	return myFile, err
 }
 
 func ParseOpenedJsonFile(f *os.File) (file, error) {
 	// TODO: read the given file into your `file` object
 	var myFile file
-	myFile.CSVFormat.Data = nil
-	myFile.CSVFormat.HasHeaders = false
-	byteValue, _ := ioutil.ReadAll(f)
-	json.Unmarshal([]byte(byteValue), &myFile.JSONFormat)
-	return myFile, nil
+	myFile.initialize()
+	byteValue, err := ioutil.ReadAll(f)
+	if err == nil {
+		json.Unmarshal([]byte(byteValue), &myFile.JSONFormat)
+	}
+	return myFile, err
 }
 
 func ParseCsvFile(path string, hasHeaders bool) (file, error) {
 	// TODO: open and read the given file into your `file` object
 	csvFile, err := os.Open((path))
 	var myFile file
-	myFile.JSONFormat = nil
+	myFile.initialize()
 	if err != nil {
-		myFile.CSVFormat.Data = nil
-		myFile.CSVFormat.HasHeaders = false
 		return myFile, err
 	}
 	defer csvFile.Close()
 	csvReader := csv.NewReader(csvFile)
 	myFile.CSVFormat.Data, err = csvReader.ReadAll()
-	myFile.CSVFormat.HasHeaders = hasHeaders
-	myFile.JSONFormat = nil
+	if err == nil {
+		myFile.CSVFormat.HasHeaders = hasHeaders
+		myFile.JSONFormat = nil
+	}
 	return myFile, err
 }
 
 func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 	// TODO: read the given file into your `file` object
-	return file{}, nil
+	var myFile file
+	myFile.initialize()
+	var err error
+	csvReader := csv.NewReader(f)
+	myFile.CSVFormat.Data, err = csvReader.ReadAll()
+	if err == nil {
+		myFile.CSVFormat.HasHeaders = hasHeaders
+		myFile.JSONFormat = nil
+	}
+	return myFile, err
 }
 
 func (f file) Csv(addHeaders bool) []byte {
