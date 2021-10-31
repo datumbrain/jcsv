@@ -1,14 +1,29 @@
-package jcsv
+package main
 
-import "os"
+import (
+	"io/ioutil"
+	"os"
+)
 
 type file struct {
-	// TODO: define variables if needed
+	data []uint8
+	fileName string
 }
 
 func ParseJsonFile(path string) (file, error) {
-	// TODO: open and read the given file into your `file` object
-	return file{}, nil
+	var f file
+	f.fileName=path
+	f.data=nil
+	fileStream,fileOpenError := os.Open(f.fileName)
+	if fileOpenError!=nil{
+		return file{},fileOpenError
+	}
+	var fileReadError error
+	f.data,fileReadError=ioutil.ReadAll(fileStream)
+	if fileReadError!=nil {
+		return file{},fileReadError
+	}
+	return f,nil
 }
 
 func ParseOpenedJsonFile(f *os.File) (file, error) {
