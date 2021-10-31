@@ -1,14 +1,30 @@
 package jcsv
 
-import "os"
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+)
 
 type file struct {
 	// TODO: define variables if needed
+	JSONFormat map[string]interface{}
 }
 
 func ParseJsonFile(path string) (file, error) {
 	// TODO: open and read the given file into your `file` object
-	return file{}, nil
+	jsonFile, err := os.Open(path)
+	var myFile file
+	if err != nil {
+		fmt.Println(err)
+		return myFile, err
+	}
+	defer jsonFile.Close()
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	json.Unmarshal([]byte(byteValue), &myFile.JSONFormat)
+	fmt.Println(myFile.JSONFormat)
+	return myFile, nil
 }
 
 func ParseOpenedJsonFile(f *os.File) (file, error) {
