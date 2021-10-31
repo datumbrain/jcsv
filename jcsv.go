@@ -71,4 +71,5 @@ func main() {
 		fmt.Println(csvErr)
 	}
 	fmt.Println(fil.csvData)
+	fmt.Println(string(fil.Csv(true)))
 }
