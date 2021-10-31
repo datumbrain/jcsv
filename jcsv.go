@@ -17,5 +17,4 @@ func main() {
 	if err==nil{
 		fmt.Println(string(f.data))
 	}
-
 }
