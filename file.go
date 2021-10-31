@@ -3,6 +3,7 @@ package jcsv
 import (
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 )
@@ -84,7 +85,7 @@ func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 func (f file) Csv(addHeaders bool) []byte {
 	// TODO: return the file data in CSV format
 	if f.CSVFormat.Data == nil {
-		return []byte("")
+		return nil
 	}
 	var CSVFormat string
 	var i int
@@ -108,5 +109,13 @@ func (f file) Csv(addHeaders bool) []byte {
 
 func (f file) Json() []byte {
 	// TODO: return the file data in JSON format
-	return nil
+	if f.JSONFormat == nil {
+		return nil
+	}
+	jsonData, err := json.Marshal(f.JSONFormat)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	return []byte(jsonData)
 }
