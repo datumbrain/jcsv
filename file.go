@@ -83,7 +83,27 @@ func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 
 func (f file) Csv(addHeaders bool) []byte {
 	// TODO: return the file data in CSV format
-	return nil
+	if f.CSVFormat.Data == nil {
+		return []byte("")
+	}
+	var CSVFormat string
+	var i int
+	if addHeaders == true {
+		i = 0
+	} else {
+		i = 1
+	}
+	for ; i < len(f.CSVFormat.Data); i = i + 1 {
+		for j := 0; j < len(f.CSVFormat.Data[i]); j = j + 1 {
+			CSVFormat = CSVFormat + (f.CSVFormat.Data[i][j])
+			if j != len(f.CSVFormat.Data[i])-1 {
+				CSVFormat = CSVFormat + ","
+			}
+
+		}
+		CSVFormat = CSVFormat + "\n"
+	}
+	return []byte(CSVFormat)
 }
 
 func (f file) Json() []byte {
