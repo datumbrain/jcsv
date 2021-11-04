@@ -16,18 +16,18 @@ type file struct {
 }
 
 func ParseJsonFile(path string) (file, error) {
-	var f file
-	f.jsonData=nil
+	var fileObj file
 	fileStream,fileOpenError := os.Open(path)
 	if fileOpenError!=nil{
 		return file{},fileOpenError
 	}
 	var fileReadError error
-	f.jsonData,fileReadError=ioutil.ReadAll(fileStream)
+	fileObj.jsonData,fileReadError=ioutil.ReadAll(fileStream)
+	fileStream.Close()
 	if fileReadError!=nil {
 		return file{},fileReadError
 	}
-	return f,nil
+	return fileObj,nil
 }
 
 func ParseOpenedJsonFile(f *os.File) (file, error) {
@@ -66,6 +66,7 @@ func ParseCsvFile(path string, hasHeaders bool) (file, error) {
 	for ;i<len(readBuffer);i++{
 		returnFile.csvData = append(returnFile.csvData, readBuffer[i])
 	}
+	csvFile.Close()
 	return  returnFile,nil
 }
 
