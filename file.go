@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -90,10 +91,13 @@ func ParseCsvFile(path string, hasHeaders bool) (file, error) {
 	//make map
 	myFile.Data = make(map[string]interface{})
 	//store csv data into file structure
-	for i := 0; i < len(CSVData); i = i + 1 {
-		myFile.Data["Record "+fmt.Sprint(i+1+'0')] = CSVData[i]
+	i := 0
+	if !hasHeaders {
+		i = 1
 	}
-
+	for ; i < len(CSVData); i = i + 1 {
+		myFile.Data["Record "+strconv.Itoa(i)] = CSVData[i]
+	}
 	return myFile, err
 }
 
@@ -115,8 +119,12 @@ func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 	//make map
 	myFile.Data = make(map[string]interface{})
 	//store csv data into file structure
-	for i := 0; i < len(CSVData); i = i + 1 {
-		myFile.Data["Record "+fmt.Sprint(i+1+'0')] = CSVData[i]
+	i := 0
+	if !hasHeaders {
+		i = 1
+	}
+	for ; i < len(CSVData); i = i + 1 {
+		myFile.Data["Record "+strconv.Itoa(i)] = CSVData[i]
 	}
 	return myFile, err
 }
@@ -146,6 +154,7 @@ func (f file) Csv(addHeaders bool) []byte {
 			addHeaders = true
 		}
 	}
+	fmt.Println(CSVFormat)
 	return []byte(CSVFormat)
 }
 
