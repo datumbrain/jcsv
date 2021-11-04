@@ -9,82 +9,73 @@ import (
 )
 
 type file struct {
-	// TODO: define variables if needed
-	JSONFormat map[string]interface{}
-	CSVFormat  struct {
-		Data [][]string
-		//if "headers==true", data[0] will contain headers
-		HasHeaders bool
-	}
+	Data [][]string
+	//if "headers==true", data[0] will contain headers
+	HasHeaders bool
 }
 
-func (f *file) initialize() {
-	f.JSONFormat = nil
-	f.CSVFormat.Data = nil
-	f.CSVFormat.HasHeaders = false
-}
 func ParseJsonFile(path string) (file, error) {
 	// TODO: open and read the given file into your `file` object
 	jsonFile, err := os.Open(path)
-	var myFile file
-	myFile.initialize()
 	if err != nil {
-		return myFile, err
+		return file{}, err
 	}
 	defer jsonFile.Close()
 	byteValue, err := ioutil.ReadAll(jsonFile)
-	if err == nil {
-		json.Unmarshal([]byte(byteValue), &myFile.JSONFormat)
+	var myFile file
+	if err != nil {
+		fmt.Println(err)
+		return file{}, err
 	}
+	json.Unmarshal(byteValue, &myFile.Data)
 	return myFile, err
 }
 
 func ParseOpenedJsonFile(f *os.File) (file, error) {
 	// TODO: read the given file into your `file` object
 	var myFile file
-	myFile.initialize()
 	byteValue, err := ioutil.ReadAll(f)
-	if err == nil {
-		json.Unmarshal([]byte(byteValue), &myFile.JSONFormat)
+	if err != nil {
+		return file{}, nil
+
 	}
+	json.Unmarshal(byteValue, &myFile)
 	return myFile, err
 }
 
 func ParseCsvFile(path string, hasHeaders bool) (file, error) {
 	// TODO: open and read the given file into your `file` object
-	csvFile, err := os.Open((path))
-	var myFile file
-	myFile.initialize()
+	csvFile, err := os.Open(path)
 	if err != nil {
-		return myFile, err
+		return file{}, err
 	}
 	defer csvFile.Close()
 	csvReader := csv.NewReader(csvFile)
-	myFile.CSVFormat.Data, err = csvReader.ReadAll()
-	if err == nil {
-		myFile.CSVFormat.HasHeaders = hasHeaders
-		myFile.JSONFormat = nil
+	var myFile file
+	myFile.Data, err = csvReader.ReadAll()
+	if err != nil {
+		return file{}, nil
 	}
+	myFile.HasHeaders = hasHeaders
 	return myFile, err
 }
 
 func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 	// TODO: read the given file into your `file` object
-	var myFile file
-	myFile.initialize()
-	var err error
 	csvReader := csv.NewReader(f)
-	myFile.CSVFormat.Data, err = csvReader.ReadAll()
-	if err == nil {
-		myFile.CSVFormat.HasHeaders = hasHeaders
-		myFile.JSONFormat = nil
+	var myFile file
+	var err error
+	myFile.Data, err = csvReader.ReadAll()
+	if err != nil {
+		return file{}, nil
 	}
+	myFile.HasHeaders = hasHeaders
 	return myFile, err
 }
 
 func (f file) Csv(addHeaders bool) []byte {
 	// TODO: return the file data in CSV format
-	if f.CSVFormat.Data == nil {
+	if f.Data == nil {
 		return nil
 	}
 	var CSVFormat string
@@ -94,13 +85,12 @@ func (f file) Csv(addHeaders bool) []byte {
 	} else {
 		i = 1
 	}
-	for ; i < len(f.CSVFormat.Data); i = i + 1 {
-		for j := 0; j < len(f.CSVFormat.Data[i]); j = j + 1 {
-			CSVFormat = CSVFormat + (f.CSVFormat.Data[i][j])
-			if j != len(f.CSVFormat.Data[i])-1 {
+	for ; i < len(f.Data); i = i + 1 {
+		for j := 0; j < len(f.Data[i]); j = j + 1 {
+			CSVFormat = CSVFormat + (f.Data[i][j])
+			if j != len(f.Data[i])-1 {
 				CSVFormat = CSVFormat + ","
 			}
-
 		}
 		CSVFormat = CSVFormat + "\n"
 	}
@@ -109,13 +99,13 @@ func (f file) Csv(addHeaders bool) []byte {
 
 func (f file) Json() []byte {
 	// TODO: return the file data in JSON format
-	if f.JSONFormat == nil {
+	if f.Data == nil {
 		return nil
 	}
-	jsonData, err := json.Marshal(f.JSONFormat)
+	jsonData, err := json.Marshal(f.Data)
 	if err != nil {
 		fmt.Println(err)
 		return nil
 	}
-	return []byte(jsonData)
+	return jsonData
 }
