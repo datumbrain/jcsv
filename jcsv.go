@@ -1,75 +1,103 @@
-package main
+package jcsv
 
 import (
 	"fmt"
-	"os"
+	"strconv"
+	"strings"
 )
 
 func JsonToCsv(j []byte, addHeaders bool) ([]byte, error) {
-	// TODO: convert JSON data in `j` into CSV format and return
-	return nil, nil
+	if j==nil{
+		return nil,nil
+	}
+	var header string
+	i:=0
+	begin:=0
+	if addHeaders{
+		for ;j[i]!='}';i++{
+			if j[i]==':'{
+				header+=strings.Trim(string(j[begin:i]),"\"  ") +","
+				begin=i+1
+			}
+			if j[i]=='\n'{
+				begin=i+1
+			}
+		}
+		header = strings.TrimRight(header,",")
+	}
+	var objectFinish bool=false
+	fmt.Println(header)
+	var result string
+	result+=header+"\n"
+	i=0
+	begin=0
+	for ;i<len(j);i++{
+		if j[i]==':'{
+			objectFinish=false
+			begin=i+1
+		}
+		if j[i]==',' && objectFinish==false{
+			result+=strings.Trim(string(j[begin:i]),"\"  ")+","
+		}
+		if j[i]=='}'{
+			result+=strings.Trim(string(j[begin:i]),"\" \n  ")+"\n"
+			objectFinish=true
+		}
+	}
+
+
+	return []byte(result), nil
 }
 
 func CsvToJson(c []byte, hasHeaders bool) ([]byte, error) {
-	// TODO: convert CSV data in `c` into JSON format and return
-	return nil, nil
-}
-
-func main() {
-	//fil,err := os.Open("C:\\Users\\sulem\\OneDrive\\Desktop\\data.json")
-	//if err!=nil{
-	//	fmt.Println(err)
-	//}
-	//data,readError := ParseOpenedJsonFile(fil)
-	//if readError!=nil{
-	//	fmt.Println(readError)
-	//}
-	//fmt.Println(string(data.data))
-
-
-
-	//f,err:=ParseJsonFile("data.json")
-	//if err==nil{
-	//	fmt.Println(string(f.data))
-	//}
-
-	//f,_ := os.Open("data.json")
-	//var data []uint8
-	//data,_ = ioutil.ReadAll(f)
-	//for i,v:= range data{
-	//	fmt.Println(i,string(v))
-	//}
-	//fmt.Printf("%T--%s",data,string(data))
-
-
-	//csvFile, err := os.Open("C:\\Users\\sulem\\OneDrive\\Desktop\\data.csv")
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//csvLines,_ := csv.NewReader(csvFile).ReadAll()
-	//fmt.Println(csvLines)
-	////data := make(map[string] []uint8)
-	//var data [][]string
-	//for i,lin:=range csvLines{
-	//	if i==0{
-	//		continue
-	//	}
-	//	data = append(data, lin)
-	//}
-	//fmt.Println(data)
-	//f,err:=ParseCsvFile("C:\\Users\\sulem\\OneDrive\\Desktop\\data.csv",true)
-	//if err!=nil{
-	//	fmt.Println(err)
-	//}
-	//fmt.Println(f.csvData)
-	f,err:=os.Open("C:\\Users\\sulem\\OneDrive\\Desktop\\data.csv")
-	if err!=nil{
-		fmt.Println(err)
+	if c==nil{
+		return nil, nil
 	}
-	fil,csvErr:=ParseOpenedCsvFile(f,true)
-	if csvErr!=nil{
-		fmt.Println(csvErr)
+	var attributes[]string
+	begin:=0
+	keysCount:=1
+	i:=0
+	if hasHeaders{
+		for ;c[i]!='\n';i++{
+			if c[i]==','{
+				attributes=append(attributes,string(c[begin:i]))
+				begin=i+1
+			}else if c[i+1]=='\n'{
+				attributes=append(attributes,string(c[begin:i+1]))
+				begin=i+1
+			}
+		}
+	}else{
+		for ;c[i]!='\n';i++{
+			if c[i]==','{
+				attributes=append(attributes,"key"+strconv.Itoa(keysCount))
+				keysCount++
+			}else if c[i+1]=='\n'{
+				attributes=append(attributes,"key"+strconv.Itoa(keysCount))
+			}
+		}
 	}
-	fmt.Println(fil.csvData)
-	fmt.Println(string(fil.Csv(true)))
+	fmt.Println(attributes)
+
+	var result string
+	i++
+	count:=0
+	for ;i<len(c);i++{
+		for ;c[i]!='\n';i++{
+			if c[i]==','{
+				if count==0{
+					result+="{\n"
+				}
+				result+=string("\t\"")+attributes[count]+string("\":\"")+strings.TrimLeft(string(c[begin:i]),"\n")+string("\",\n")
+				begin=i+1
+				count++
+			}else if c[i+1]=='\n'{
+				result+=string("\t\"")+attributes[count]+string("\":\"")+string(c[begin:i+1])+string("\"\n}\n")
+				begin=i+1
+				count=0
+			}
+		}
+	}
+
+	return []byte(result), nil
 }
