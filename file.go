@@ -154,7 +154,6 @@ func (f file) Csv(addHeaders bool) []byte {
 			addHeaders = true
 		}
 	}
-	fmt.Println(CSVFormat)
 	return []byte(CSVFormat)
 }
 

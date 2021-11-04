@@ -2,74 +2,83 @@ package jcsv
 
 import (
 	"encoding/json"
+	"strconv"
+	"strings"
 )
 
-// type JSOBObject struct {
-// 	Data map[string]map[string]string
-// }
-
 func JsonToCsv(j []byte, addHeaders bool) ([]byte, error) {
-	// TODO: convert JSON data in `j` into CSV format and return
+	//create file object
 	var JSON file
+
+	//convert data in j to Data
 	json.Unmarshal(j, &JSON.Data)
+
+	//return converted CSV in []byte form
 	return JSON.Csv(addHeaders), nil
-	// var CSVData string
-	// var header string
-	// isHeaderFormed := false
-	// for key, _ := range JSON.Data {
-	// 	var rowData string
-	// 	for innerKey, value := range JSON.Data[key] {
-	// 		if !isHeaderFormed {
-	// 			header = header + "," + innerKey
-	// 		}
-	// 		rowData = rowData + "," + string(value)
-	// 	}
-	// 	isHeaderFormed = true
-	// 	CSVData = CSVData + rowData[1:] + "\n"
-	// }
-	// header = header[1:]
-	// if addHeaders == true {
-	// 	return []byte(header + "\n" + CSVData), nil
-	// }
-	// return []byte(CSVData), nil
 }
 
-// func CsvToJson(c []byte, hasHeaders bool) ([]byte, error) {
+func CsvToJson(c []byte, hasHeaders bool) ([]byte, error) {
 
-// 	CSVStr := string(c)
+	//convert []byte to string
+	CSVStr := string(c)
 
-// 	splittedStr := strings.Split(CSVStr, "\n")
+	//split the string on the basis of '\n'
+	splittedStr := strings.Split(CSVStr, "\n")
 
-// 	var JSON file
-// 	var header []string
-// 	if hasHeaders {
-// 		header = strings.Split(splittedStr[0], ",")
-// 	}
-// 	JSON.Data = make(map[string]interface{})
-// 	outerInd := 1
-// 	skipped := false
-// 	for _, row := range splittedStr {
-// 		if row != "" {
-// 			key := "row" + strconv.Itoa(outerInd)
-// 			if hasHeaders == false || skipped == true {
-// 				JSON.Data[key] = make(map[string]string)
-// 			}
-// 			splittedRow := strings.Split(row, ",")
-// 			innerInd := 1
-// 			for _, attribute := range splittedRow {
-// 				if hasHeaders == true {
-// 					if skipped == true {
-// 						JSON.Data[key][header[innerInd-1]] = attribute
-// 					}
-// 				} else {
-// 					JSON.Data[key]["column"+strconv.Itoa(innerInd)] = attribute
-// 				}
-// 				innerInd = innerInd + 1
-// 			}
-// 			skipped = true
-// 		}
-// 		outerInd = outerInd + 1
-// 	}
-// 	jsonData, _ := json.Marshal(JSON.Data)
-// 	return []byte(jsonData), nil
-// }
+	//create map
+	JSON := make(map[string]map[string]string)
+
+	//for storing header
+	var header []string
+
+	//for assigning row no as key
+	rowInd := 0
+
+	//if HasHeader is true then first row should be skipped
+	//as it only contains heading of each column
+	//initially skipHeaderRow is false
+	skipHeaderRow := false
+
+	//if hasHeaders is true then split the row 0 that contain headers
+	if hasHeaders {
+		header = strings.Split(splittedStr[0], ",")
+		//now row 0 should be skipped
+		skipHeaderRow = true
+	}
+
+	//for each comma separated string in splittedStr
+	for _, row := range splittedStr {
+		//if row is not blank and skipHeaderRow is false
+		if row != "" && !skipHeaderRow {
+			//create key for row
+			key := "row" + strconv.Itoa(rowInd)
+
+			//create map for row
+			JSON[key] = make(map[string]string)
+
+			//split string on the basis of comma
+			splittedRow := strings.Split(row, ",")
+
+			colInd := 0
+			for _, attribute := range splittedRow {
+
+				if hasHeaders {
+					//if hasHeader then create that specific header as row key
+					JSON[key][header[colInd]] = attribute
+				} else {
+					//if hasHeader then create that specific header as row key
+					JSON[key]["key"+strconv.Itoa(colInd)] = attribute
+				}
+
+				colInd = colInd + 1
+			}
+		}
+		skipHeaderRow = false
+		rowInd = rowInd + 1
+	}
+
+	//convert map to JSON
+	jsonData, _ := json.Marshal(JSON)
+
+	return []byte(jsonData), nil
+}
