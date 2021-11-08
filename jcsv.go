@@ -11,7 +11,7 @@ func JsonToCsv(j []byte, addHeaders bool) ([]byte, error) {
 	var JSON file
 
 	//convert data in j to Data
-	json.Unmarshal(j, &JSON.Data)
+	json.Unmarshal(j, &JSON.data)
 
 	//return converted CSV in []byte form
 	return JSON.Csv(addHeaders), nil
@@ -19,11 +19,8 @@ func JsonToCsv(j []byte, addHeaders bool) ([]byte, error) {
 
 func CsvToJson(c []byte, hasHeaders bool) ([]byte, error) {
 
-	//convert []byte to string
-	CSVStr := string(c)
-
 	//split the string on the basis of '\n'
-	splittedStr := strings.Split(CSVStr, "\n")
+	splittedStr := strings.Split(string(c), "\n")
 
 	//create map
 	JSON := make(map[string]map[string]string)
@@ -76,7 +73,6 @@ func CsvToJson(c []byte, hasHeaders bool) ([]byte, error) {
 		skipHeaderRow = false
 		rowInd = rowInd + 1
 	}
-
 	//convert map to JSON
 	jsonData, _ := json.Marshal(JSON)
 

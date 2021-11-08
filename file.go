@@ -6,58 +6,52 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strconv"
 	"strings"
 )
 
 type file struct {
-	Data map[string]interface{}
+	data []map[string]interface{}
 }
 
 func ParseJsonFile(path string) (file, error) {
 	//open JSON file
 	jsonFile, err := os.Open(path)
 
-	//if an error occurred
 	if err != nil {
 		fmt.Println(err)
 		return file{}, err
 	}
 
-	//defer the closing of file till the function ends
 	defer jsonFile.Close()
 
 	//read complete json file and store in byteValue
 	byteValue, err := ioutil.ReadAll(jsonFile)
-	//if an error occurred while reading JSON file
 
 	if err != nil {
 		fmt.Println(err)
 		return file{}, err
 	}
 
-	//create file object
 	var myFile file
 	//convert JSON read from file in byteValue to "Data" inside file stucture
-	json.Unmarshal(byteValue, &myFile.Data)
+	json.Unmarshal(byteValue, &myFile.data)
 
 	return myFile, err
 }
 
 func ParseOpenedJsonFile(f *os.File) (file, error) {
-	//create file object
 	var myFile file
+
 	//read complete json file and store in byteValue
 	byteValue, err := ioutil.ReadAll(f)
 
-	//if an error occurred while reading JSON file
 	if err != nil {
 		fmt.Println(err)
 		return file{}, nil
 	}
-	//convert JSON read from file in byteValue to "Data" inside file stucture
 
-	json.Unmarshal(byteValue, &myFile)
+	//convert JSON read from file in byteValue to "Data" inside file stucture
+	json.Unmarshal(byteValue, &myFile.data)
 
 	return myFile, err
 }
@@ -66,12 +60,10 @@ func ParseCsvFile(path string, hasHeaders bool) (file, error) {
 	//open CSV file
 	csvFile, err := os.Open(path)
 
-	//if an error occurred
 	if err != nil {
 		return file{}, err
 	}
 
-	//defer closing of file
 	defer csvFile.Close()
 
 	//get CSV Reader instance
@@ -80,23 +72,33 @@ func ParseCsvFile(path string, hasHeaders bool) (file, error) {
 	var CSVData [][]string
 	//read all data into CSVData
 	CSVData, err = csvReader.ReadAll()
-
 	//if an error occurred
 	if err != nil {
 		return file{}, nil
 	}
 
-	//create file object
 	var myFile file
-	//make map
-	myFile.Data = make(map[string]interface{})
+	myFile.data = make([]map[string]interface{}, len(CSVData))
+
 	//store csv data into file structure
 	i := 0
-	if !hasHeaders {
+	var header []string
+	if hasHeaders {
 		i = 1
+		header = CSVData[0]
 	}
 	for ; i < len(CSVData); i = i + 1 {
-		myFile.Data["Record "+strconv.Itoa(i)] = CSVData[i]
+		if hasHeaders {
+			myFile.data[i-1] = make(map[string]interface{})
+			for j := 0; j < len(CSVData[i]); j++ {
+				myFile.data[i-1][header[j]] = CSVData[i][j]
+			}
+		} else {
+			myFile.data[i] = make(map[string]interface{})
+			for j := 0; j < len(CSVData[i]); j++ {
+				myFile.data[i]["key"+fmt.Sprint(j)] = CSVData[i][j]
+			}
+		}
 	}
 	return myFile, err
 }
@@ -116,54 +118,82 @@ func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 	}
 
 	var myFile file
-	//make map
-	myFile.Data = make(map[string]interface{})
+	myFile.data = make([]map[string]interface{}, len(CSVData))
+
 	//store csv data into file structure
 	i := 0
-	if !hasHeaders {
+	var header []string
+	if hasHeaders {
 		i = 1
+		header = CSVData[0]
 	}
 	for ; i < len(CSVData); i = i + 1 {
-		myFile.Data["Record "+strconv.Itoa(i)] = CSVData[i]
+		if hasHeaders {
+			myFile.data[i-1] = make(map[string]interface{})
+			for j := 0; j < len(CSVData[i]); j++ {
+				myFile.data[i-1][header[j]] = CSVData[i][j]
+			}
+		} else {
+			myFile.data[i] = make(map[string]interface{})
+			for j := 0; j < len(CSVData[i]); j++ {
+				myFile.data[i]["key"+fmt.Sprint(j)] = CSVData[i][j]
+			}
+		}
 	}
 	return myFile, err
 }
 
 func (f file) Csv(addHeaders bool) []byte {
-	if f.Data == nil {
+	if f.data == nil {
 		return nil
 	}
-
 	var CSVFormat string
-	for key := range f.Data {
-		//if addHeaders is true then add first row else skip first row
+	var header string
+	for key := range f.data {
+
+		CSVRecord := fmt.Sprintf("%v", f.data[key])
+
+		//remove square brackets
+		CSVRecord = strings.ReplaceAll(CSVRecord, "[", "")
+		CSVRecord = strings.ReplaceAll(CSVRecord, "]", "")
+		//replace spaces with commas
+		CSVRecord = strings.ReplaceAll(CSVRecord, " ", ",")
+		//remove map keyword from string
+		CSVRecord = strings.ReplaceAll(CSVRecord, "map", "")
+
 		if addHeaders {
-			//convert data against key to string
-			//most probably it will be a map
-			CSVRecord := fmt.Sprintf("%v", f.Data[key])
-			//remove square brackets
-			CSVRecord = strings.ReplaceAll(CSVRecord, "[", "")
-			CSVRecord = strings.ReplaceAll(CSVRecord, "]", "")
-			//replace spaces with commas
-			CSVRecord = strings.ReplaceAll(CSVRecord, " ", ",")
-			//remove map keyword from string
-			CSVRecord = strings.ReplaceAll(CSVRecord, "map", "")
-			//add new line
-			CSVFormat = CSVFormat + CSVRecord + "\n"
+			//replace all keys
+			//user1 , user2 and so on
+			for mapKey := range f.data[key] {
+				if key == 0 {
+					header = header + "," + mapKey
+				}
+				CSVRecord = strings.ReplaceAll(CSVRecord, mapKey+":", "")
+			}
+			//wherever newline is meant to be inserted that index contains ,:
+			//......csv.....,key:.......csv
+			//when key is removed ,: remains
+			CSVRecord = strings.ReplaceAll(CSVRecord, ",:", ",")
 		} else {
-			addHeaders = true
+			for mapKey := range f.data[key] {
+				CSVRecord = strings.ReplaceAll(CSVRecord, mapKey+":", "")
+			}
 		}
+		CSVFormat = CSVFormat + CSVRecord + "\n"
+	}
+	if addHeaders {
+		CSVFormat = header[1:] + "\n" + CSVFormat
 	}
 	return []byte(CSVFormat)
 }
 
 func (f file) Json() []byte {
-	if f.Data == nil {
+	if f.data == nil {
 		return nil
 	}
 
 	//convert JSON data in f.Data to []byte
-	jsonData, err := json.Marshal(f.Data)
+	jsonData, err := json.Marshal(f.data)
 	//if error occurred
 	if err != nil {
 		fmt.Println(err)
