@@ -7,31 +7,31 @@ import (
 )
 
 func JsonToCsv(j []byte, addHeaders bool) ([]byte, error) {
-	//create file object
+	// create file object
 	var JSON file
 
-	//convert data in j to Data
+	// convert data in j to Data
 	err := json.Unmarshal(j, &JSON.data)
 	if err != nil {
 		return nil, err
 	}
 
-	//return converted CSV in []byte form
+	// return converted CSV in []byte form
 	return JSON.Csv(addHeaders), nil
 }
 
 func CsvToJson(c []byte, hasHeaders bool) ([]byte, error) {
 
-	//split the string on the basis of '\n'
+	// split the string on the basis of '\n'
 	splittedStr := strings.Split(string(c), "\n")
 
-	//create map
+	// create map
 	JSON := make(map[string]map[string]string)
 
-	//for storing header
+	// for storing header
 	var header []string
 
-	//for assigning row no as key
+	// for assigning row no as key
 	rowInd := 0
 
 	//if HasHeader is true then first row should be skipped
