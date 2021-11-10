@@ -84,20 +84,16 @@ func ParseCsvFile(path string, hasHeaders bool) (file, error) {
 	i := 0
 	var header []string
 	if hasHeaders {
-		i = 1
 		header = CSVData[0]
+	} else {
+		for i := 0; i < len(CSVData[0]); i = i + 1 {
+			header = append(header, "key"+fmt.Sprint(i))
+		}
 	}
-	for ; i < len(CSVData); i = i + 1 {
-		if hasHeaders {
-			myFile.data[i-1] = make(map[string]interface{})
-			for j := 0; j < len(CSVData[i]); j++ {
-				myFile.data[i-1][header[j]] = CSVData[i][j]
-			}
-		} else {
-			myFile.data[i] = make(map[string]interface{})
-			for j := 0; j < len(CSVData[i]); j++ {
-				myFile.data[i]["key"+fmt.Sprint(j)] = CSVData[i][j]
-			}
+	for i = 0; i < len(CSVData); i = i + 1 {
+		myFile.data[i] = make(map[string]interface{})
+		for j := 0; j < len(CSVData[i]); j++ {
+			myFile.data[i][header[j]] = CSVData[i][j]
 		}
 	}
 	return myFile, err
@@ -184,6 +180,7 @@ func (f file) Csv(addHeaders bool) []byte {
 	if addHeaders {
 		CSVFormat = header[1:] + "\n" + CSVFormat
 	}
+	fmt.Println(CSVFormat)
 	return []byte(CSVFormat)
 }
 
