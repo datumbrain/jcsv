@@ -85,12 +85,13 @@ func ParseCsvFile(path string, hasHeaders bool) (file, error) {
 	var header []string
 	if hasHeaders {
 		header = CSVData[0]
+		i = 1
 	} else {
 		for i := 0; i < len(CSVData[0]); i = i + 1 {
 			header = append(header, "key"+fmt.Sprint(i))
 		}
 	}
-	for i = 0; i < len(CSVData); i = i + 1 {
+	for ; i < len(CSVData); i = i + 1 {
 		myFile.data[i] = make(map[string]interface{})
 		for j := 0; j < len(CSVData[i]); j++ {
 			myFile.data[i][header[j]] = CSVData[i][j]
@@ -144,10 +145,11 @@ func (f file) Csv(addHeaders bool) []byte {
 		return nil
 	}
 	var CSVFormat string
+	isHeaderFormed := false
+	var header string
 	for key := range f.data {
 
 		CSVRecord := fmt.Sprintf("%v", f.data[key])
-
 		// remove square brackets
 		CSVRecord = strings.ReplaceAll(CSVRecord, "[", "")
 		CSVRecord = strings.ReplaceAll(CSVRecord, "]", "")
@@ -155,21 +157,27 @@ func (f file) Csv(addHeaders bool) []byte {
 		CSVRecord = strings.ReplaceAll(CSVRecord, " ", ",")
 		// remove map keyword from string
 		CSVRecord = strings.ReplaceAll(CSVRecord, "map", "")
-
-		if addHeaders {
-			//replace all keys
-			//user1 , user2 and so on
-			for mapKey := range f.data[key] {
-				CSVRecord = strings.ReplaceAll(CSVRecord, mapKey+":", "")
+		//replace all keys
+		//user1 , user2 and so on
+		for mapKey := range f.data[key] {
+			CSVRecord = strings.ReplaceAll(CSVRecord, mapKey+":", "")
+			if !isHeaderFormed {
+				header = header + "," + mapKey
 			}
-			//wherever newline is meant to be inserted that index contains ,:
-			//......csv.....,key:.......csv
-			//when key is removed ,: remains
-			CSVRecord = strings.ReplaceAll(CSVRecord, ",:", ",")
-			CSVFormat = CSVFormat + CSVRecord + "\n"
-		} else {
-			addHeaders = true
 		}
+		if len(CSVRecord) != 0 {
+			isHeaderFormed = true
+		}
+		//CSVFormat = CSVFormat + CSVRecord + "\n"
+		//wherever newline is meant to be inserted that index contains ,:
+		//......csv.....,key:.......csv
+		//when key is removed ,: remains
+		CSVRecord = strings.ReplaceAll(CSVRecord, ",:", ",")
+		CSVFormat = CSVFormat + CSVRecord + "\n"
+	}
+
+	if addHeaders {
+		CSVFormat = header[1:] + "\n" + CSVFormat
 	}
 	fmt.Println(CSVFormat)
 	return []byte(CSVFormat)
@@ -187,6 +195,5 @@ func (f file) Json() []byte {
 		fmt.Println(err)
 		return nil
 	}
-
 	return jsonData
 }
