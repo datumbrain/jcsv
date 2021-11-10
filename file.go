@@ -144,7 +144,6 @@ func (f file) Csv(addHeaders bool) []byte {
 		return nil
 	}
 	var CSVFormat string
-	var header string
 	for key := range f.data {
 
 		CSVRecord := fmt.Sprintf("%v", f.data[key])
@@ -158,27 +157,19 @@ func (f file) Csv(addHeaders bool) []byte {
 		CSVRecord = strings.ReplaceAll(CSVRecord, "map", "")
 
 		if addHeaders {
-			// replace all keys
-			// user1 , user2 and so on
+			//replace all keys
+			//user1 , user2 and so on
 			for mapKey := range f.data[key] {
-				if key == 0 {
-					header = header + "," + mapKey
-				}
 				CSVRecord = strings.ReplaceAll(CSVRecord, mapKey+":", "")
 			}
-			// wherever newline is meant to be inserted that index contains ,:
-			// ......csv.....,key:.......csv
-			// when key is removed ,: remains
+			//wherever newline is meant to be inserted that index contains ,:
+			//......csv.....,key:.......csv
+			//when key is removed ,: remains
 			CSVRecord = strings.ReplaceAll(CSVRecord, ",:", ",")
+			CSVFormat = CSVFormat + CSVRecord + "\n"
 		} else {
-			for mapKey := range f.data[key] {
-				CSVRecord = strings.ReplaceAll(CSVRecord, mapKey+":", "")
-			}
+			addHeaders = true
 		}
-		CSVFormat = CSVFormat + CSVRecord + "\n"
-	}
-	if addHeaders {
-		CSVFormat = header[1:] + "\n" + CSVFormat
 	}
 	fmt.Println(CSVFormat)
 	return []byte(CSVFormat)
