@@ -34,8 +34,9 @@ func ParseJsonFile(path string) (file, error) {
 
 	var myFile file
 	//convert JSON read from file in byteValue to "Data" inside file stucture
-	json.Unmarshal(byteValue, &myFile.data)
+	err = json.Unmarshal(byteValue, &myFile.data)
 
+	//fmt.Println(err)
 	return myFile, err
 }
 

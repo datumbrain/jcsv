@@ -11,7 +11,10 @@ func JsonToCsv(j []byte, addHeaders bool) ([]byte, error) {
 	var JSON file
 
 	//convert data in j to Data
-	json.Unmarshal(j, &JSON.data)
+	err := json.Unmarshal(j, &JSON.data)
+	if err != nil {
+		return nil, err
+	}
 
 	//return converted CSV in []byte form
 	return JSON.Csv(addHeaders), nil
