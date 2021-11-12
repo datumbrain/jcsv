@@ -35,7 +35,19 @@ func ParseJsonFile(path string) (file, error) {
 	var myFile file
 	// convert JSON read from file in byteValue to "Data" inside file stucture
 	err = json.Unmarshal(byteValue, &myFile.data)
-
+	if err != nil {
+		//if JSON data was not in the form of array
+		//the Unmartial it in map[string]interface{}
+		//and append it in the array in file
+		//so first index of array contains the JSON object
+		var JSON map[string]interface{}
+		err = json.Unmarshal(byteValue, &JSON)
+		if err != nil {
+			return file{}, nil
+		}
+		myFile.data = append(myFile.data, JSON)
+	}
+	fmt.Println(myFile.data)
 	return myFile, err
 }
 
@@ -91,6 +103,7 @@ func ParseCsvFile(path string, hasHeaders bool) (file, error) {
 			header = append(header, "key"+fmt.Sprint(i))
 		}
 	}
+
 	for ; i < len(CSVData); i = i + 1 {
 		myFile.data[i] = make(map[string]interface{})
 		for j := 0; j < len(CSVData[i]); j++ {
@@ -150,6 +163,7 @@ func (f file) Csv(addHeaders bool) []byte {
 	for key := range f.data {
 
 		CSVRecord := fmt.Sprintf("%v", f.data[key])
+
 		// remove square brackets
 		CSVRecord = strings.ReplaceAll(CSVRecord, "[", "")
 		CSVRecord = strings.ReplaceAll(CSVRecord, "]", "")
