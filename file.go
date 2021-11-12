@@ -18,7 +18,6 @@ func ParseJsonFile(path string) (file, error) {
 	jsonFile, err := os.Open(path)
 
 	if err != nil {
-		fmt.Println(err)
 		return file{}, err
 	}
 
@@ -33,7 +32,6 @@ func ParseOpenedJsonFile(f *os.File) (file, error) {
 	byteValue, err := ioutil.ReadAll(f)
 
 	if err != nil {
-		fmt.Println(err)
 		return file{}, err
 	}
 
@@ -52,7 +50,6 @@ func ParseOpenedJsonFile(f *os.File) (file, error) {
 		}
 		myFile.data = append(myFile.data, JSON)
 	}
-	fmt.Println(myFile.data)
 	return myFile, err
 }
 
@@ -84,7 +81,6 @@ func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 	}
 
 	var myFile file
-	myFile.data = make([]map[string]interface{}, len(CSVData))
 
 	// store csv data into file structure
 	i := 0
@@ -99,10 +95,11 @@ func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 	}
 
 	for ; i < len(CSVData); i = i + 1 {
-		myFile.data[i] = make(map[string]interface{})
+		row := make(map[string]interface{})
 		for j := 0; j < len(CSVData[i]); j++ {
-			myFile.data[i][header[j]] = CSVData[i][j]
+			row[header[j]] = CSVData[i][j]
 		}
+		myFile.data = append(myFile.data, row)
 	}
 	return myFile, err
 }
@@ -127,8 +124,8 @@ func (f file) Csv(addHeaders bool) []byte {
 		CSVRecord = strings.ReplaceAll(CSVRecord, " ", ",")
 		// remove map keyword from string
 		CSVRecord = strings.ReplaceAll(CSVRecord, "map", "")
-		//replace all keys
-		//user1 , user2 and so on
+		// replace all keys
+		// user1 , user2 and so on
 		for mapKey := range f.data[key] {
 			CSVRecord = strings.ReplaceAll(CSVRecord, mapKey+":", "")
 			if !isHeaderFormed {
@@ -138,10 +135,10 @@ func (f file) Csv(addHeaders bool) []byte {
 		if len(CSVRecord) != 0 {
 			isHeaderFormed = true
 		}
-		//CSVFormat = CSVFormat + CSVRecord + "\n"
-		//wherever newline is meant to be inserted that index contains ,:
-		//......csv.....,key:.......csv
-		//when key is removed ,: remains
+		// CSVFormat = CSVFormat + CSVRecord + "\n"
+		// wherever newline is meant to be inserted that index contains ,:
+		// ......csv.....,key:.......csv
+		// when key is removed ,: remains
 		CSVRecord = strings.ReplaceAll(CSVRecord, ",:", ",")
 		CSVFormat = CSVFormat + CSVRecord + "\n"
 	}
