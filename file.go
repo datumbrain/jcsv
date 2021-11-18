@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -36,20 +37,21 @@ func ParseOpenedJsonFile(f *os.File) (file, error) {
 	}
 
 	var myFile file
-	// convert JSON read from file in byteValue to "Data" inside file stucture
+	// convert JSON read from file to struct
 	err = json.Unmarshal(byteValue, &myFile.data)
 	if err != nil {
-		//if JSON data was not in the form of array
-		//the Unmartial it in map[string]interface{}
-		//and append it in the array in file
-		//so first index of array contains the JSON object
-		var JSON map[string]interface{}
-		err = json.Unmarshal(byteValue, &JSON)
+		// If JSON data was not in the form of an array this will try to unmarshal it as an object
+		// and append it in the array
+		var data map[string]interface{}
+
+		err = json.Unmarshal(byteValue, &data)
 		if err != nil {
 			return file{}, nil
 		}
-		myFile.data = append(myFile.data, JSON)
+
+		myFile.data = append(myFile.data, data)
 	}
+
 	return myFile, err
 }
 
@@ -68,14 +70,8 @@ func ParseCsvFile(path string, hasHeaders bool) (file, error) {
 
 func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 
-	// get CSV Reader instance
-	csvReader := csv.NewReader(f)
-	// create an object to hold csv data
-	var CSVData [][]string
-	var err error
-	// read all data into CSVData
-	CSVData, err = csvReader.ReadAll()
-	// if an error occurred
+	// parsing csv data
+	data, err := csv.NewReader(f).ReadAll()
 	if err != nil {
 		return file{}, nil
 	}
@@ -86,21 +82,24 @@ func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 	i := 0
 	var header []string
 	if hasHeaders {
-		header = CSVData[0]
+		header = data[0]
 		i = 1
 	} else {
-		for i := 0; i < len(CSVData[0]); i = i + 1 {
-			header = append(header, "key"+fmt.Sprint(i))
+		for i := range data[0] {
+			header = append(header, "key"+strconv.Itoa(i))
 		}
 	}
 
-	for ; i < len(CSVData); i = i + 1 {
+	for ; i < len(data); i = i + 1 {
 		row := make(map[string]interface{})
-		for j := 0; j < len(CSVData[i]); j++ {
-			row[header[j]] = CSVData[i][j]
+
+		for j := 0; j < len(data[i]); j++ {
+			row[header[j]] = data[i][j]
 		}
+
 		myFile.data = append(myFile.data, row)
 	}
+
 	return myFile, err
 }
 
