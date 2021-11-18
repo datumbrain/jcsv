@@ -36,23 +36,7 @@ func ParseOpenedJsonFile(f *os.File) (file, error) {
 		return file{}, err
 	}
 
-	var myFile file
-	// convert JSON read from file to struct
-	err = json.Unmarshal(byteValue, &myFile.data)
-	if err != nil {
-		// If JSON data was not in the form of an array this will try to unmarshal it as an object
-		// and append it in the array
-		var data map[string]interface{}
-
-		err = json.Unmarshal(byteValue, &data)
-		if err != nil {
-			return file{}, nil
-		}
-
-		myFile.data = append(myFile.data, data)
-	}
-
-	return myFile, err
+	return ParseJson(byteValue)
 }
 
 func ParseCsvFile(path string, hasHeaders bool) (file, error) {
@@ -90,6 +74,7 @@ func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 		}
 	}
 
+	//store data in structure
 	for ; i < len(data); i = i + 1 {
 		row := make(map[string]interface{})
 
@@ -105,7 +90,7 @@ func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 
 func (f file) Csv(addHeaders bool) []byte {
 	if f.data == nil {
-		return nil
+		panic("cannot convert nil")
 	}
 
 	var CSVFormat string
@@ -151,15 +136,33 @@ func (f file) Csv(addHeaders bool) []byte {
 
 func (f file) Json() []byte {
 	if f.data == nil {
-		return nil
+		panic("cannot convert nil")
 	}
 
-	// convert JSON data in f.Data to []byte
-	jsonData, err := json.Marshal(f.data)
+	// convert JSON data to []byte
+	jsonData, _ := json.Marshal(f.data)
+
+	return jsonData
+}
+
+func ParseJson(j []byte) (file, error) {
+	var myFile file
+
+	// convert JSON read from file to struct
+	err := json.Unmarshal(j, &myFile.data)
 
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		// If JSON data was not in the form of an array this will try to unmarshal it as an object
+		// and append it in the array
+		var data map[string]interface{}
+
+		err = json.Unmarshal(j, &data)
+		if err != nil {
+			return file{}, nil
+		}
+
+		myFile.data = append(myFile.data, data)
 	}
-	return jsonData
+
+	return myFile, err
 }

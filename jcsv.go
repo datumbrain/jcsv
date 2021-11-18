@@ -7,17 +7,14 @@ import (
 )
 
 func JsonToCsv(j []byte, addHeaders bool) ([]byte, error) {
-	// create file object
-	var JSON file
-
-	// convert data in j to Data
-	err := json.Unmarshal(j, &JSON.data)
+	// convert []byte to file struct
+	file, err := ParseJson(j)
 	if err != nil {
 		return nil, err
 	}
 
 	// return converted CSV in []byte form
-	return JSON.Csv(addHeaders), nil
+	return file.Csv(addHeaders), nil
 }
 
 func CsvToJson(c []byte, hasHeaders bool) ([]byte, error) {
