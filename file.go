@@ -57,6 +57,10 @@ func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 	// parsing csv data
 	data, err := csv.NewReader(f).ReadAll()
 	if err != nil {
+		return file{}, err
+	}
+
+	if len(data) == 0 {
 		return file{}, nil
 	}
 
