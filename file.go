@@ -1,127 +1,140 @@
 package jcsv
 
-
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strconv"
+	"strings"
 )
 
 type file struct {
-	jsonData []uint8
-	csvData [][]string
-	csvHeader []string
+	data []map[string]interface{} //a 1D-array of maps having string keys and empty interface values
 }
 
 func ParseJsonFile(path string) (file, error) {
-	var fileObj file
-	fileStream,fileOpenError := os.Open(path)
-	if fileOpenError!=nil{
-		return file{},fileOpenError
+	jsonFile, openError := os.Open(path)
+	if openError != nil {
+		return file{}, openError
 	}
-	var fileReadError error
-	fileObj.jsonData,fileReadError=ioutil.ReadAll(fileStream)
-	fileStream.Close()
-	if fileReadError!=nil {
-		return file{},fileReadError
-	}
-	return fileObj,nil
+
+	defer jsonFile.Close()
+	return ParseOpenedJsonFile(jsonFile)
 }
 
 func ParseOpenedJsonFile(f *os.File) (file, error) {
-	var fileRead file
-	var fileReadError error
-	fileRead.jsonData,fileReadError=ioutil.ReadAll(f)
-	if fileReadError!=nil {
-		return file{},fileReadError
+	byteValue, readError := ioutil.ReadAll(f) //ReadAll gives read data in []byte
+
+	if readError != nil {
+		return file{}, readError
 	}
-	return fileRead,nil
+
+	var myFile file
+	readError = json.Unmarshal(byteValue, &myFile.data) //Unmarshal projects/casts []byte data on a variable wrt its datatype
+
+	if readError != nil {
+		var JSON map[string]interface{} //Unmarshall can not project []byte to []map[string] if JSON is limited to only one object
+		readError = json.Unmarshal(byteValue, &JSON)
+
+		if readError != nil {
+			return file{}, nil
+		}
+
+		myFile.data = append(myFile.data, JSON) //myFile.data is of type []map[string]interface{} whereas JSON is of map[string]interface{}
+	}
+
+	return myFile, readError
 }
 
 func ParseCsvFile(path string, hasHeaders bool) (file, error) {
-	var returnFile file
-	csvFile, err := os.Open(path)
-	if err != nil {
-		fmt.Println(err)
-		return file{},err
+	csvFile, openErr := os.Open(path)
+
+	if openErr != nil {
+		return file{}, openErr
 	}
-	readBuffer,readError := csv.NewReader(csvFile).ReadAll()
-	if readError!=nil{
-		return file{},readError
-	}
-	var i int
-	if hasHeaders {
-		for j := 0; j < len(readBuffer[0]); j++ {
-			returnFile.csvHeader = append(returnFile.csvHeader, readBuffer[0][j])
-		}
-		i=1
-	}else {
-		for j:=0;j<len(readBuffer[0]);j++{
-			returnFile.csvHeader=append(returnFile.csvHeader,"key" + strconv.Itoa(j))
-		}
-		i=0
-	}
-	for ;i<len(readBuffer);i++{
-		returnFile.csvData = append(returnFile.csvData, readBuffer[i])
-	}
-	csvFile.Close()
-	return  returnFile,nil
+
+	defer csvFile.Close()
+	return ParseOpenedCsvFile(csvFile, hasHeaders)
 }
 
 func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
-	var fileObj file
-	readBuffer,readError := csv.NewReader(f).ReadAll()
-	if readError!=nil{
-		return file{},readError
+	csvReader := csv.NewReader(f)
+	CSVData, readError := csvReader.ReadAll() // csv ReadALl returns data in form of 2D-Array of String
+
+	if readError != nil {
+		return file{}, readError
 	}
-	var i int
+
+	var myFile file
+	i := 0
+	var header []string
+
 	if hasHeaders {
-		for j := 0; j < len(readBuffer[0]); j++ {
-			fileObj.csvHeader = append(fileObj.csvHeader, readBuffer[0][j])
+		header = CSVData[0]
+		i = 1
+	} else {
+		for i := 0; i < len(CSVData[0]); i = i + 1 {
+			header = append(header, "key"+fmt.Sprint(i)) //making my own keys/attribute names
 		}
-		i=1
-	}else {
-		for j:=0;j<len(readBuffer[0]);j++{
-			fileObj.csvHeader=append(fileObj.csvHeader,"key" + strconv.Itoa(j))
+	}
+
+	for ; i < len(CSVData); i = i + 1 {
+		row := make(map[string]interface{})    //var row map[string]interface{}
+		for j := 0; j < len(CSVData[i]); j++ { //accessing every string object in a single row of csv data
+			row[header[j]] = CSVData[i][j] //storing csv data in form of key-value pairs
 		}
-		i=0
+		myFile.data = append(myFile.data, row)
 	}
-	for ;i<len(readBuffer);i++{
-		fileObj.csvData = append(fileObj.csvData, readBuffer[i])
-	}
-	return  fileObj,nil
+	return myFile, readError
 }
 
 func (f file) Csv(addHeaders bool) []byte {
-	var dataToBeReturned []byte
-	if addHeaders == true{
-		for j:=0;j<len(f.csvHeader);j++{
-			for k:=0;k<len(f.csvHeader[j]);k++{
-				dataToBeReturned = append(dataToBeReturned , f.csvHeader[j][k])
-			}
-			if j<len(f.csvHeader)-1 {
-				dataToBeReturned = append(dataToBeReturned, ',')
-			}
-		}
+	if f.data == nil {
+		return nil
 	}
-	dataToBeReturned= append(dataToBeReturned, '\n')
-	for i:=0;i< len(f.csvData);i++{
-		for j:=0;j<len(f.csvData[i]);j++{
-			for k:=0;k<len(f.csvData[i][j]);k++{
-				dataToBeReturned = append(dataToBeReturned , f.csvData[i][j][k])
-			}
-			if j<len(f.csvData[i]) - 1 {
-				dataToBeReturned = append(dataToBeReturned, ',')
-			}
-		}
-		dataToBeReturned=append(dataToBeReturned,'\n')
-	}
-	return dataToBeReturned
 
+	var CSVFormat string
+	isHeaderFormed := false
+	var header string
+
+	for key := range f.data {
+		CSVRecord := fmt.Sprintf("%v", f.data[key])         //stringify data of given variable
+		CSVRecord = strings.ReplaceAll(CSVRecord, "[", "")  //f.data holds data as 1D-array of maps, and
+		CSVRecord = strings.ReplaceAll(CSVRecord, "]", "")  // here we are filtering out Json markups
+		CSVRecord = strings.ReplaceAll(CSVRecord, " ", ",") //to convert it to csv
+		CSVRecord = strings.ReplaceAll(CSVRecord, "map", "")
+
+		for mapKey := range f.data[key] {
+			CSVRecord = strings.ReplaceAll(CSVRecord, mapKey+":", "")
+			if !isHeaderFormed {
+				header = header + "," + mapKey
+			}
+		}
+
+		if len(CSVRecord) != 0 {
+			isHeaderFormed = true
+		}
+
+		CSVRecord = strings.ReplaceAll(CSVRecord, ",:", ",")
+		CSVFormat = CSVFormat + CSVRecord + "\n"
+	}
+
+	if addHeaders {
+		CSVFormat = header[1:] + "\n" + CSVFormat //header[0] contains ','
+	}
+	return []byte(CSVFormat)
 }
 
 func (f file) Json() []byte {
-	return f.jsonData
+	if f.data == nil {
+		return nil
+	}
+	jsonData, err := json.Marshal(f.data) //it projects data from a variable to []byte
+
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	return jsonData
 }

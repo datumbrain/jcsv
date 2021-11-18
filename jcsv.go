@@ -1,103 +1,57 @@
 package jcsv
 
 import (
-	"fmt"
+	"encoding/json"
 	"strconv"
 	"strings"
 )
 
 func JsonToCsv(j []byte, addHeaders bool) ([]byte, error) {
-	if j==nil{
-		return nil,nil
-	}
-	var header string
-	i:=0
-	begin:=0
-	if addHeaders{
-		for ;j[i]!='}';i++{
-			if j[i]==':'{
-				header+=strings.Trim(string(j[begin:i]),"\"  ") +","
-				begin=i+1
-			}
-			if j[i]=='\n'{
-				begin=i+1
-			}
-		}
-		header = strings.TrimRight(header,",")
-	}
-	var objectFinish bool=false
-	fmt.Println(header)
-	var result string
-	result+=header+"\n"
-	i=0
-	begin=0
-	for ;i<len(j);i++{
-		if j[i]==':'{
-			objectFinish=false
-			begin=i+1
-		}
-		if j[i]==',' && objectFinish==false{
-			result+=strings.Trim(string(j[begin:i]),"\"  ")+","
-		}
-		if j[i]=='}'{
-			result+=strings.Trim(string(j[begin:i]),"\" \n  ")+"\n"
-			objectFinish=true
-		}
+	var JSON file
+	parseError := json.Unmarshal(j, &JSON.data) //projecting []byte to json.data which is []map[string]interface{}
+
+	if parseError != nil {
+		return nil, parseError
 	}
 
-
-	return []byte(result), nil
+	return JSON.Csv(addHeaders), nil
 }
 
 func CsvToJson(c []byte, hasHeaders bool) ([]byte, error) {
-	if c==nil{
-		return nil, nil
+	splittedStr := strings.Split(string(c), "\n") //typecasting 'c' to string and splitting it on basis of new line
+	JSON := make(map[string]map[string]string)
+	var header []string
+	rowInd := 0
+	skipHeaderRow := false
+	if hasHeaders { //if hasHeader is true, first row of given csv data must be header which will be keys in json
+		header = strings.Split(splittedStr[0], ",")
+		skipHeaderRow = true
 	}
-	var attributes[]string
-	begin:=0
-	keysCount:=1
-	i:=0
-	if hasHeaders{
-		for ;c[i]!='\n';i++{
-			if c[i]==','{
-				attributes=append(attributes,string(c[begin:i]))
-				begin=i+1
-			}else if c[i+1]=='\n'{
-				attributes=append(attributes,string(c[begin:i+1]))
-				begin=i+1
-			}
-		}
-	}else{
-		for ;c[i]!='\n';i++{
-			if c[i]==','{
-				attributes=append(attributes,"key"+strconv.Itoa(keysCount))
-				keysCount++
-			}else if c[i+1]=='\n'{
-				attributes=append(attributes,"key"+strconv.Itoa(keysCount))
-			}
-		}
-	}
-	fmt.Println(attributes)
 
-	var result string
-	i++
-	count:=0
-	for ;i<len(c);i++{
-		for ;c[i]!='\n';i++{
-			if c[i]==','{
-				if count==0{
-					result+="{\n"
+	for _, row := range splittedStr {
+		if row != "" && !skipHeaderRow { //skipHeaderRow==false means we don't have keys, we will make them
+			key := strconv.Itoa(rowInd) //key := "row" + strconv.Itoa(rowInd)  //
+			JSON[key] = make(map[string]string)
+			splittedRow := strings.Split(row, ",") //dividing complete row on basis of ',' these
+			colInd := 0                            //splitted strings will be values for json
+
+			for _, attribute := range splittedRow {
+
+				if hasHeaders { //using given headers as keys
+					JSON[key][header[colInd]] = attribute
+				} else { //making our own keys
+					JSON[key]["key"+strconv.Itoa(colInd)] = attribute
 				}
-				result+=string("\t\"")+attributes[count]+string("\":\"")+strings.TrimLeft(string(c[begin:i]),"\n")+string("\",\n")
-				begin=i+1
-				count++
-			}else if c[i+1]=='\n'{
-				result+=string("\t\"")+attributes[count]+string("\":\"")+string(c[begin:i+1])+string("\"\n}\n")
-				begin=i+1
-				count=0
+
+				colInd = colInd + 1
 			}
 		}
+
+		skipHeaderRow = false
+		rowInd = rowInd + 1
 	}
 
-	return []byte(result), nil
+	jsonData, _ := json.Marshal(JSON) //coverting the json data we built to []byte
+
+	return []byte(jsonData), nil
 }
