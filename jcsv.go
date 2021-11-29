@@ -16,7 +16,6 @@ func JsonToCsv(j []byte, addHeaders bool) ([]byte, error) {
 }
 
 func CsvToJson(c []byte, hasHeaders bool) ([]byte, error) {
-
 	myFile, err := ParseCsv(c, hasHeaders)
 	if err != nil {
 		return nil, err
