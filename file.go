@@ -64,32 +64,7 @@ func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 		return file{}, nil
 	}
 
-	var myFile file
-
-	// store csv data into file structure
-	i := 0
-	var header []string
-	if hasHeaders {
-		header = data[0]
-		i = 1
-	} else {
-		for i := range data[0] {
-			header = append(header, "key"+strconv.Itoa(i))
-		}
-	}
-
-	//store data in structure
-	for ; i < len(data); i = i + 1 {
-		row := make(map[string]interface{})
-
-		for j := 0; j < len(data[i]); j++ {
-			row[header[j]] = data[i][j]
-		}
-
-		myFile.data = append(myFile.data, row)
-	}
-
-	return myFile, err
+	return ParseCsv(toByteArray(data), hasHeaders)
 }
 
 func (f file) Csv(addHeaders bool) []byte {
@@ -134,7 +109,6 @@ func (f file) Csv(addHeaders bool) []byte {
 	if addHeaders {
 		CSVFormat = header[1:] + "\n" + CSVFormat
 	}
-	fmt.Println(CSVFormat)
 	return []byte(CSVFormat)
 }
 
@@ -169,4 +143,37 @@ func ParseJson(j []byte) (file, error) {
 	}
 
 	return myFile, err
+}
+
+func ParseCsv(c []byte, hasHeaders bool) (file, error) {
+
+	data := toArrayOfArrayOfString(c)
+
+	var myFile file
+
+	// store csv data into file structure
+	i := 0
+	var header []string
+	if hasHeaders {
+		header = data[0]
+		i = 1
+	} else {
+		for i := range data[0] {
+			header = append(header, "key"+strconv.Itoa(i))
+		}
+	}
+
+	//store data in structure
+	for ; i < len(data); i = i + 1 {
+		row := make(map[string]interface{})
+
+		for j := 0; j < len(data[i]); j++ {
+			row[header[j]] = data[i][j]
+		}
+
+		myFile.data = append(myFile.data, row)
+	}
+
+	return myFile, nil
+
 }
