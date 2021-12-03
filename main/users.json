@@ -1,6 +1,0 @@
-[
-	{
-	"student1" : {"name": "ahsan","rollno":"BCSF18M007",	"cgpa":"3.87","subjects":["PF","OOP","DSA"]},
-	"student2" : {"name": "suleman","rollno":"BCSF18M002",	"cgpa":"3.78","subjects":["DLD","OOAD","SE"]}
-	}
-]
