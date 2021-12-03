@@ -1,6 +1,7 @@
 package jcsv
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -70,44 +71,38 @@ func (f file) Csv(addHeaders bool) []byte {
 		panic("cannot convert nil")
 	}
 
-	var csvFormat string
-	isHeaderFormed := false
-	var header string
-
-	for key := range f.data {
-
-		csvRecord := fmt.Sprintf("%v", f.data[key])
-
-		// remove square brackets
-		csvRecord = strings.ReplaceAll(csvRecord, "[", "")
-		csvRecord = strings.ReplaceAll(csvRecord, "]", "")
-		// replace spaces with commas
-		csvRecord = strings.ReplaceAll(csvRecord, " ", ",")
-		// remove map keyword from string
-		csvRecord = strings.ReplaceAll(csvRecord, "map", "")
-		// replace all keys
-		// user1 , user2 and so on
-		for mapKey := range f.data[key] {
-			csvRecord = strings.ReplaceAll(csvRecord, mapKey+":", "")
-			if !isHeaderFormed {
-				header = header + "," + mapKey
-			}
-		}
-		if len(csvRecord) != 0 {
-			isHeaderFormed = true
-		}
-		// CSVFormat = CSVFormat + CSVRecord + "\n"
-		// wherever newline is meant to be inserted that index contains ,:
-		// ......csv.....,key:.......csv
-		// when key is removed ,: remains
-		csvRecord = strings.ReplaceAll(csvRecord, ",:", ",")
-		csvFormat = csvFormat + csvRecord + "\n"
+	var myCSV [][]string
+	var header []string
+	// parse csv headers
+	for key, _ := range f.data[0] {
+		header = append(header, key)
 	}
-
 	if addHeaders {
-		csvFormat = header[1:] + "\n" + csvFormat
+		myCSV = append(myCSV, header)
 	}
-	return []byte(csvFormat)
+
+	// Parse csv values
+	for _, rowData := range f.data {
+		var row []string
+		for _, value := range rowData {
+			val := fmt.Sprintf("%v", value)
+
+			val = strings.ReplaceAll(val, "map", "")
+			val = strings.ReplaceAll(val, "[", "")
+			val = strings.ReplaceAll(val, "]", "")
+
+			row = append(row, val)
+		}
+		myCSV = append(myCSV, row)
+	}
+
+	// write csv data
+	var buffer bytes.Buffer
+	csvWriter := csv.NewWriter(&buffer)
+	csvWriter.WriteAll(myCSV)
+	fmt.Println(string(buffer.Bytes()))
+
+	return buffer.Bytes()
 }
 
 func (f file) Json() []byte {
@@ -172,5 +167,4 @@ func ParseCsv(c []byte, hasHeaders bool) (file, error) {
 	}
 
 	return myFile, nil
-
 }
