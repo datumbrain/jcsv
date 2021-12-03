@@ -54,16 +54,18 @@ func ParseCsvFile(path string, hasHeaders bool) (file, error) {
 
 func ParseOpenedCsvFile(f *os.File, hasHeaders bool) (file, error) {
 	// parsing csv data
-	data, err := csv.NewReader(f).ReadAll()
+	//data, err := csv.NewReader(f).ReadAll()
+	byteValue, err := ioutil.ReadAll(f)
+
 	if err != nil {
 		return file{}, err
 	}
 
-	if len(data) == 0 {
+	if len(byteValue) == 0 {
 		return file{}, nil
 	}
 
-	return ParseCsv(toByteArray(data), hasHeaders)
+	return ParseCsv(byteValue, hasHeaders)
 }
 
 func (f file) Csv(addHeaders bool) []byte {
@@ -139,7 +141,12 @@ func ParseJson(j []byte) (file, error) {
 }
 
 func ParseCsv(c []byte, hasHeaders bool) (file, error) {
-	data := toArrayOfArrayOfString(c)
+	//data := toArrayOfArrayOfString(c)
+	//buffer :=
+	data, err := csv.NewReader(bytes.NewBuffer(c)).ReadAll()
+	if err != nil {
+		return file{}, err
+	}
 
 	var myFile file
 
