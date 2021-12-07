@@ -1,37 +1,54 @@
 package jcsv
 
-import "os"
+import (
+	"bytes"
+	"encoding/csv"
+	"encoding/json"
+)
 
 type file struct {
-	// TODO: define variables if needed
+	data []map[string]interface{}
 }
 
-func ParseJsonFile(path string) (file, error) {
-	// TODO: open and read the given file into your `file` object
-	return file{}, nil
+// Csv returns the data in the CSV format
+func (f *file) Csv(addHeaders bool) []byte {
+	if f.data == nil {
+		panic("cannot convert nil")
+	}
+
+	var buf bytes.Buffer
+	w := csv.NewWriter(&buf)
+
+	// writing csv headers
+	if addHeaders {
+		var headers []string
+		for key, _ := range f.data[0] {
+			headers = append(headers, key)
+		}
+
+		w.Write(headers)
+	}
+
+	// writing csv values
+	for _, rowData := range f.data {
+		var row []string
+		for _, value := range rowData {
+			row = append(row, value.(string))
+		}
+
+		w.Write(row)
+	}
+
+	return buf.Bytes()
 }
 
-func ParseOpenedJsonFile(f *os.File) (file, error) {
-	// TODO: read the given file into your `file` object
-	return file{}, nil
-}
+// Json returns the data in the JSON format
+func (f *file) Json() []byte {
+	if f.data == nil {
+		panic("cannot convert nil")
+	}
 
-func ParseCsvFile(path string, hasHeaders bool) (file, error) {
-	// TODO: open and read the given file into your `file` object
-	return file{}, nil
-}
+	jsonData, _ := json.Marshal(f.data)
 
-func ParseCsvJsonFile(f *os.File, hasHeaders bool) (file, error) {
-	// TODO: read the given file into your `file` object
-	return file{}, nil
-}
-
-func (f file) Csv(addHeaders bool) []byte {
-	// TODO: return the file data in CSV format
-	return nil
-}
-
-func (f file) Json() []byte {
-	// TODO: return the file data in JSON format
-	return nil
+	return jsonData
 }

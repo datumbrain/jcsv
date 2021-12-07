@@ -1,11 +1,21 @@
 package jcsv
 
+// JsonToCsv convert the given JSON data to CSV data
 func JsonToCsv(j []byte, addHeaders bool) ([]byte, error) {
-	// TODO: convert JSON data in `j` into CSV format and return
-	return nil, nil
+	f, err := ParseJson(j)
+	if err != nil {
+		return nil, err
+	}
+
+	return f.Csv(addHeaders), nil
 }
 
+// CsvToJson convert the given CSV data to JSON data
 func CsvToJson(c []byte, hasHeaders bool) ([]byte, error) {
-	// TODO: convert CSV data in `c` into JSON format and return
-	return nil, nil
+	f, err := ParseCsv(c, hasHeaders)
+	if err != nil {
+		return nil, err
+	}
+
+	return f.Json(), err
 }
