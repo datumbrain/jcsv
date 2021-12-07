@@ -1,3 +1,3 @@
-module FYP/GO_ASSIGNMENT1/jcsv
+module github.com/datumbrain/jcsv
 
 go 1.16
