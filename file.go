@@ -38,7 +38,9 @@ func (f *file) Csv(addHeaders bool) []byte {
 
 		w.Write(row)
 	}
-
+	
+	w.Flush()
+	
 	return buf.Bytes()
 }
 
